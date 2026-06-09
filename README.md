@@ -290,6 +290,10 @@ The uninstall scripts remove only user-level adapter install artifacts, such as 
 
 After uninstalling an adapter, open a new agent session so that agent reloads its local command/plugin state.
 
+## Supported By
+
+<img src="https://zonodqioyxil6r3k.public.blob.vercel-storage.com/logo/Zhejiang_University_Logo.svg" alt="Zhejiang University" width="220">
+
 ## License
 
 Loom is open source under the [Apache License 2.0](./LICENSE).

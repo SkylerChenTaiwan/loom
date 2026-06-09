@@ -292,6 +292,10 @@ npm run plugin:uninstall-adapters
 
 卸载 adapter 后，请打开新的 agent 会话，让对应 agent 重新加载本地 command/plugin 状态。
 
+## 支持方
+
+<img src="https://zonodqioyxil6r3k.public.blob.vercel-storage.com/logo/Zhejiang_University_Logo.svg" alt="浙江大学" width="220">
+
 ## 许可证
 
 Loom 基于 [Apache License 2.0](./LICENSE) 开源。
