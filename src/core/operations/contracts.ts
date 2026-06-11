@@ -2144,11 +2144,10 @@ function buildArchitectureRepairRequest(
     targetCandidateFile: targetOutput?.candidateFile ?? null,
     targetSchemaRef: targetOutput?.schemaRef ?? null,
     targetGenerationRules: targetOutput?.generationRules ?? [],
-    sectionOutputs: sectionOutputs.map((output) => ({
-      section: output.section,
-      candidateFile: output.candidateFile,
-      schemaRef: output.schemaRef,
-    })),
+    // Single-section repair protocol: a repair always selects a targetSection (defaults to
+    // "coverage" above), so it must not dangle the full sectionOutputs list — that would invite
+    // the agent to rewrite every section instead of only targetCandidateFile. The full list
+    // belongs to the initial (no-targetSection) generation request, not to a targeted repair.
     issues: issues.map(compactContractIssue),
     issueSpecificRepairRules: architectureRepairRulesForIssues(issues),
     repairPolicy: {
