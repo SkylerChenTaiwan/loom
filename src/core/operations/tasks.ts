@@ -569,6 +569,7 @@ export async function createTaskPlanRequest(input: CreateTaskPlanRequestInput): 
         ".contextProjection.requirementDetailTransfer.currentPhaseScope.included[].items",
         ".contextProjection.requirementDetailTransfer.acceptanceDetails[]",
         ".contextProjection.requirementDetailTransfer.businessFlowDetails[]",
+        ".contextProjection.requirementDetailTransfer.objectOperationDetailRules",
         ".contextProjection.requirementDetailTransfer.workflowClosureRequirements[]",
         ".contextProjection.requirementDetailTransfer.architectureDetails",
         ".contextProjection.requirementDetailTransfer.architectureDetails.frontendOperationPathDetails",
@@ -577,6 +578,7 @@ export async function createTaskPlanRequest(input: CreateTaskPlanRequestInput): 
       compactJqExamples: [
         ".sourceRefs",
         ".contextProjection.requirementDetailTransfer.acceptanceDetails[] | {id,statement,sourceRefs,capabilityRefs,aacCoverage}",
+        ".contextProjection.requirementDetailTransfer.objectOperationDetailRules | {taskAssignmentRule,conceptBindingRule,evidenceRule}",
         ".contextProjection.requirementDetailTransfer.architectureDetails | {modules,interfaces,userFlows}",
         ".contextProjection.requirementDetailTransfer.architectureDetails.frontendOperationPathDetails | {dataViews,actions,operationPaths}",
         ".contextProjection.requirementDetailTransfer.workflowClosureRequirements[] | {closureId,workflowRef,interfaceRefs,acceptanceRefs,requiredDataBindingMode,requiredEvidence}",
@@ -2099,7 +2101,7 @@ function buildTaskAcceptanceSnapshot(
         reason: aacCoverage.reason ?? null,
         reasonCategory: aacCoverage.reasonCategory ?? null,
       } : null,
-      taskResponsibilityRule: "Use this combined PGC acceptance detail and AAC coverage when implementing task objective, verificationResults, and any frontend/runtime evidence.",
+      taskResponsibilityRule: "Use this combined PGC acceptance detail and AAC coverage when implementing task objective, verificationResults, conceptEvidence, frontend/runtime evidence, and object-operation behavior. If the statement names fields, rules, states, blocking reasons, or feedback, TaskResult evidence must address them.",
     };
   });
 }
@@ -2688,6 +2690,7 @@ async function buildTaskExecutionRequest(
           "When task.frontendExperienceRequirement.executionGuidance is present, use it to decide the surfaces, workflows, operation paths, interaction states, and data-binding evidence for this task.",
           "When task.frontendExperienceRequirement.executionGuidance.frontendBackendBindings is present, use it as the first coding guide for wiring user actions to AAC-declared interfaces, including method/path/schemas and success/error UI states.",
           "When operationPathsInScope/dataViewsInScope/actionsInScope are present, implement or verify the declared target discovery, selection, action entry, refresh policy, and visible feedback; record matching evidence in frontendExperienceSelfCheck.",
+          "When task objective, acceptanceSnapshot, taskConceptGrounding, or sourceContext.architectureArtifactProjection names key fields, object operations, operation inputs, preconditions, blocking reasons, state changes, or feedback, implement and verify those details explicitly. Do not replace them with a generic completed feature summary.",
           ...(requestTask.frontendExperienceRequirement ? frontendImplementationOrganizationRules : []),
           "frontendBackendBindings is not an API allowlist. If a needed interface is missing from the projection, read sourceRefs.architectureArtifactContractRef, sourceRefs.taskPlanRef, and project source before deciding; do not invent an undeclared API.",
           "If unresolvedBindingInputs is non-empty, use its readToResolve guidance to continue coding when possible, or record the remaining data-binding gap in frontendExperienceSelfCheck. Do not stop only because CLI projection was incomplete.",
@@ -2701,6 +2704,7 @@ async function buildTaskExecutionRequest(
           ] : []),
           "changedFiles must list intended deliverables only, not node_modules, caches, logs, dist, build, or other incidental side effects.",
           "When task.conceptRefs is non-empty, write conceptEvidence for every task conceptRef using the exact concept ids from taskConceptGrounding.",
+          "When conceptEvidence is required for an object operation, make the summary identify the concrete field meaning, operation invariant, validation/blocking reason, state transition, or visible feedback that was protected.",
           "If verification fails after allowed self-repair, still submit a failed or blocked TaskResult instead of asking the user whether to continue.",
         ],
       },
@@ -2812,6 +2816,7 @@ async function buildTaskExecutionRequest(
         "If dependency installation succeeds, rerun the relevant verification before writing TaskResult.",
         "Only record verification status not_run for missing dependencies after attempting the allowed package-manager install or when installation is impossible; explain the attempted command and failure in notes.",
         "Do not implement full lifecycle for reference_only entities.",
+        "Preserve task-scoped object-operation details from acceptanceSnapshot, taskConceptGrounding, and architectureArtifactProjection: key fields, operation inputs, preconditions, validation/blocking reasons, success states, state transitions, and visible feedback.",
         "Use project structure and framework conventions discovered in the workspace.",
         compactContextReadStep,
         "Record intended deliverable changes in TaskResult.changedFiles: source, tests, configs, manifests, lockfiles, docs, and other task-relevant project files.",
@@ -2943,6 +2948,7 @@ async function buildTaskExecutionRequest(
         "For browser/e2e/interactive verification, follow executionRules.interactiveVerificationProbePolicy and record evidence through existing TaskResult fields.",
         "For frontend tasks, use task.frontendExperienceRequirement.executionGuidance when present and fill frontendExperienceSelfCheck with surfaces, workflows, user actions, states, data binding mode, and known gaps.",
         "For frontend tasks, use frontendBackendBindings as coding guidance for user-action-to-interface wiring. If a needed binding is absent, read AAC/TaskPlan/source and continue; do not treat projection absence as a validator failure.",
+        "When task acceptance or concept grounding names concrete object fields, object operations, blocking reasons, state changes, or visible feedback, verificationResults and conceptEvidence must mention the matching implemented or verified behavior instead of only reporting that the module exists.",
         ...(workflowClosureRequirements.length > 0 ? [
           "For tasks with workflowClosureRequirements, frontendExperienceSelfCheck.status=satisfied is valid only when frontendExperienceSelfCheck.dataBinding.mode=wired and frontendExperienceSelfCheck.knownGaps is empty.",
           "If the task remains static_only_with_reason, mocked_with_reason, or has knownGaps for required closure, use partially_satisfied/not_satisfied in frontendExperienceSelfCheck and completed_with_notes/failed/blocked according to the actual implementation and verification outcome.",
@@ -3097,7 +3103,7 @@ function taskResultSchemaShape(taskPlan: TaskPlan, task: Task): Record<string, u
       conceptRef,
       evidenceType: "code | test | api | ui | runtime | documentation",
       refs: ["project-relative code/test/UI/API/runtime evidence file"],
-      summary: "How this task implemented or protected the concept without misinterpretation.",
+      summary: "How this task implemented or protected the concept without misinterpretation. For object-operation concepts, name the field meaning, operation invariant, validation/blocking reason, state transition, or visible feedback covered.",
     })) : undefined,
     runtimeDeliveryEvidence: task.runtimeDeliveryRequirement ? {
       requirementRef: "task.runtimeDeliveryRequirement.runtimeDeliveryRef",
@@ -3274,6 +3280,7 @@ function buildArchitectureProjection(aac: ArchitectureArtifactContract, task: Ta
         "user flow steps and outcomes",
         "state machine transitions guards effects and rules",
         "frontend operation paths data views actions and feedback",
+        "task-relevant object operations, field sets, blocking reasons, state changes, and visible feedback when AAC preserved them",
       ],
       fallbackRule: "If this projection still lacks a detail needed for the task, read sourceRefs.architectureArtifactContractRef with targeted selectors; do not guess missing requirement rules.",
     },
@@ -3615,6 +3622,21 @@ function taskPlanRequirementDetailProjection(
       };
     }),
     businessFlowDetails: pgc.planningInputs.businessFlows,
+    objectOperationDetailRules: {
+      sourceFields: [
+        "currentPhaseScope.included[].items",
+        "acceptanceDetails[].statement",
+        "businessFlowDetails[].summary",
+        "architectureDetails.entities",
+        "architectureDetails.userFlows",
+        "architectureDetails.stateMachines",
+        "architectureDetails.interfaces",
+        "conceptRefs.phaseConceptGroundingRef",
+      ],
+      taskAssignmentRule: "When Brainstorm/PGC/AAC carries key business objects, key field sets, object operations, operation inputs, preconditions, validation/blocking reasons, success state changes, or visible feedback, assign those details to concrete tasks and verificationIntents instead of reducing the work to generic service or UI labels.",
+      conceptBindingRule: "If a task owns an operation invariant, state transition rule, blocking reason, or field meaning from phaseConceptGroundingRef, include conceptRefs, conceptResponsibilities, and conceptVerificationIntents for that task.",
+      evidenceRule: "TaskResult must be able to show which fields, rules, state changes, blocking feedback, interface roles, or page operation paths were implemented or verified.",
+    },
     architectureDetails: {
       modules: aac.modules,
       entities: aac.dataModel.entities,
@@ -3632,10 +3654,10 @@ function taskPlanRequirementDetailProjection(
     },
     taskPlanningFieldMapping: {
       groupsObjective: "Summarize the engineering capability slice using currentPhaseScope items plus acceptanceDetails.",
-      taskObjective: "Name the concrete rule, field, flow, state, UI, API, or blocking detail the task owns.",
+      taskObjective: "Name the concrete business object, field set, operation, input, rule, flow, state, UI, API, blocking detail, or feedback detail the task owns.",
       implementationActions: "Choose enum actions that match the AAC artifact kind and concrete detail.",
       writeBoundaryArtifactRefs: "Reference AAC modules/entities/interfaces/userFlows/stateMachines/decisions/risks that carry the detail.",
-      verificationIntentsBehavior: "Describe the specific acceptance rule, field, state, flow, operation path, or feedback this task must verify.",
+      verificationIntentsBehavior: "Describe the specific acceptance rule, object operation, input, field, state, flow, blocking reason, operation path, readback, or feedback this task must verify.",
       frontendExperienceRequirement: "Use when frontendExperience is required or a task owns UI surfaces/workflows/states/bindings.",
       workflowClosureRequirement: "When workflowClosureRequirements exists, assign each closureId to at least one task whose artifact refs include the workflowRef and interfaceRefs, whose implementationActions include wire_reference_in_api_or_ui, and whose verificationIntents can prove the wired user action through automated_test or runtime_api_check evidence.",
       runtimeDeliveryRequirement: "Use when the task touches build/start/runtime entry/serving/configuration/generated artifacts/runtime surface.",
@@ -4239,10 +4261,11 @@ function buildTaskGenerationRules(aac?: ArchitectureArtifactContract): Record<st
       authorityField: "contextProjection.requirementDetailTransfer",
       rules: [
         "Use contextProjection.requirementDetailTransfer before writing the outline or any group file.",
-        "Carry concrete current phase details from acceptanceDetails, currentPhaseScope.included[].items, businessFlowDetails, and architectureDetails into TaskPlan groups and tasks.",
-        "Task objective must identify the concrete rule, field, workflow, state, UI surface, operation path, API/interface, blocking reason, or runtime contract detail the task owns when such detail exists.",
+        "Carry concrete current phase details from acceptanceDetails, currentPhaseScope.included[].items, businessFlowDetails, objectOperationDetailRules, and architectureDetails into TaskPlan groups and tasks.",
+        "Task objective must identify the concrete business object, key field set, operation, operation input, rule, workflow, state, UI surface, operation path, API/interface, blocking reason, visible feedback, or runtime contract detail the task owns when such detail exists.",
         "verificationIntents[].behavior must describe the concrete behavior to verify, not only repeat an acceptance id or module label.",
         "writeBoundary.artifactRefs must point to the AAC artifacts that carry the task detail; do not leave artifactRefs empty for implementation tasks when matching AAC artifacts exist.",
+        "When objectOperationDetailRules names operation inputs, field sets, blocking reasons, state changes, or feedback, assign them through task objectives, conceptResponsibilities, writeBoundary artifactRefs, and verificationIntents so TaskExecution can implement and prove them.",
         "When architectureDetails.frontendOperationPathDetails.operationPaths is non-empty, assign target discovery, action entry, refresh/result observation, and feedback responsibilities to frontend or integration tasks through frontendExperienceRequirement.",
         "When AAC interfaces include role=read_model, role=command, or role=readback for the same frontend workflow or operation path, TaskPlan must make producer implementation, frontend consumer wiring, and post-action readback/refresh verification responsibilities explicit in one coherent task or dependent task group.",
         "If required detail exists in PGC but no AAC artifact can carry it, write blocked output with blockedReasonCode AAC_INSUFFICIENT.",
@@ -4278,6 +4301,7 @@ function buildTaskGenerationRules(aac?: ArchitectureArtifactContract): Record<st
       phaseConceptGroundingRef: "sourceRefs.phaseConceptGroundingRef when present",
       rules: [
         "If a task is responsible for a current high-risk concept, include conceptRefs, conceptResponsibilities, and conceptVerificationIntents.",
+        "If a task owns a business object field meaning, operation invariant, validation/blocking reason, state transition, or visible feedback from phaseConceptGroundingRef, bind the corresponding conceptRef and describe that concrete responsibility.",
         "Use conceptRefs only from phaseConceptGroundingRef; do not invent concept ids.",
         "Every conceptRefs item must have a matching conceptResponsibilities item.",
         "ConceptVerificationIntents evidenceType must use enumRefs.conceptEvidenceType.",

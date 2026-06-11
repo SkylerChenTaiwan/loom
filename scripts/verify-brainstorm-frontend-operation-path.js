@@ -84,13 +84,27 @@ assertIncludes(
 );
 assertIncludes(
   request.clarificationConversationProtocol.blockConfirmationRules.concept_grounding,
-  "business objects, operations on those objects",
-  "concept_grounding confirmation must include object operations and rule semantics",
+  "key field sets",
+  "concept_grounding confirmation must include object field-set semantics",
+);
+assertIncludes(
+  request.clarificationConversationProtocol.blockConfirmationRules.concept_grounding,
+  "operation inputs",
+  "concept_grounding confirmation must include operation inputs and rule semantics",
 );
 assertIncludes(
   request.clarificationConversationProtocol.blockConfirmationRules.frontend_experience,
   "how users find or receive target objects",
   "frontend_experience confirmation must include target discovery/selection path",
+);
+assert.ok(
+  request.firstClarificationGate.mustPresentBeforeAccept.includes("businessObjectOperationSummary"),
+  "first clarification gate must require business object/operation summary before accept",
+);
+assertIncludes(
+  blockRules,
+  "key business objects, key field sets, supported operations",
+  "concept_grounding block must own object field and operation-rule clarification",
 );
 
 const semanticContract = request.rules.requirementSemanticGrounding.finalSummaryBusinessDetailContract;
@@ -106,6 +120,14 @@ assert.ok(
   semanticContract.frontendOperationPathContract.candidateFields.includes("frontendExperience.operationPaths"),
   "operation-path contract must map to frontendExperience.operationPaths",
 );
+assert.ok(
+  semanticContract.requiredUserVisibleTopicsWhenApplicable.includes("key field sets per object"),
+  "business-detail contract must require object field-set confirmation",
+);
+assert.ok(
+  semanticContract.objectOperationContract.candidateFields.includes("domainModel.businessFlows[].summary"),
+  "object-operation contract must map details to existing businessFlows summaries",
+);
 
 const frontendShape = request.outputContract.schemaShape.frontendExperience;
 assert.ok(Array.isArray(frontendShape.dataViews), "schemaShape.frontendExperience must include dataViews");
@@ -115,6 +137,11 @@ assertIncludes(
   request.outputContract.schemaShape.candidateRules.join("\n"),
   "Write page operation path details into frontendExperience.dataViews/actions/operationPaths",
   "candidateRules must require operation-path details in structured frontend fields",
+);
+assertIncludes(
+  request.outputContract.schemaShape.candidateRules.join("\n"),
+  "Store confirmed object-operation details in existing BrainstormCandidate fields",
+  "candidateRules must require object-operation details in existing BrainstormCandidate fields",
 );
 
 const repositoryContextSource = readRepo("src/core/operations/repository-context.ts");

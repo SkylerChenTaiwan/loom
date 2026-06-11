@@ -354,6 +354,10 @@ function assertCandidateSelfReviewRules(request, label) {
     `${label}: self-review rules must verify final_summary details land in existing fields`,
   );
   assert.ok(
+    selfReview?.rules?.some((rule) => rule.includes("object-operation summary") && rule.includes("key field sets")),
+    `${label}: self-review rules must verify object-operation details land in existing fields`,
+  );
+  assert.ok(
     selfReview?.rules?.some((rule) => rule.includes("Do not create a separate Markdown spec")),
     `${label}: self-review rules must not introduce Markdown spec as a parallel authority`,
   );
@@ -693,8 +697,21 @@ function assertBrainstormConceptGroundingRequest(request) {
     "BrainstormSessionRequest: phase_scope mentions must not satisfy concept/frontend blocks",
   );
   assert.ok(
-    blockConfirmationRules.concept_grounding?.includes("dedicated concept summary"),
-    "BrainstormSessionRequest: concept_grounding must require a dedicated concept summary",
+    blockConfirmationRules.concept_grounding?.includes("dedicated concept and business-rules summary"),
+    "BrainstormSessionRequest: concept_grounding must require a dedicated concept and business-rules summary",
+  );
+  assert.ok(
+    blockConfirmationRules.concept_grounding?.includes("key field sets") &&
+      blockConfirmationRules.concept_grounding?.includes("operation inputs"),
+    "BrainstormSessionRequest: concept_grounding must require object field sets and operation inputs",
+  );
+  assert.ok(
+    request.firstClarificationGate?.mustPresentBeforeAccept?.includes("businessObjectOperationSummary"),
+    "BrainstormSessionRequest: first clarification gate must include businessObjectOperationSummary",
+  );
+  assert.ok(
+    blockRules.some((rule) => rule.includes("key business objects, key field sets, supported operations")),
+    "BrainstormSessionRequest: concept_grounding block must own object-operation clarification",
   );
   assert.ok(
     blockConfirmationRules.frontend_experience?.includes("dedicated frontend target"),
@@ -1117,6 +1134,7 @@ function brainstormCandidate(request, options = {}) {
           "includedDeferredExcludedBoundary",
           "nextPhasePreview",
           "conceptSummary",
+          "businessObjectOperationSummary",
           "businessDetailConfirmation",
         ],
       },

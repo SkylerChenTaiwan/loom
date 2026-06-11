@@ -43,6 +43,8 @@ import { artifactGenerationProtocolPolicy, artifactInstructionPolicy, artifactRe
 import { agentActionContract, brainstormSessionAgentActionContract } from "./agent-action";
 import { referencedArtifactReadGuide } from "./artifact-read-guide";
 import {
+  businessObjectOperationCandidateRules,
+  businessObjectOperationClarificationRules,
   brainstormCandidateSelfReviewRules,
   brainstormRequirementSemanticRules,
   frontendOperationPathCandidateRules,
@@ -1265,6 +1267,7 @@ function createPhaseBrainstormSessionRequest(input: {
         "includedDeferredExcludedBoundary",
         "nextPhasePreview",
         "conceptSummary",
+        "businessObjectOperationSummary",
       ],
       confirmationMustOccurAfterPresentation: true,
     },
@@ -1285,6 +1288,8 @@ function createPhaseBrainstormSessionRequest(input: {
         "A phase_scope option may mention concept or frontend context, but those mentions are context only and do not satisfy concept_grounding or frontend_experience.",
         ...phaseScopeOptionComparisonRules(),
         "Do not set clarificationProgress.confirmedBlocks for a block until the user has seen that block's dedicated question or summary and confirmed or corrected it.",
+        "The concept_grounding block must clarify key business objects, key field sets, supported operations, operation inputs, preconditions, validation or blocking reasons, success state changes, and user-visible feedback before final_summary when domain behavior applies.",
+        ...businessObjectOperationClarificationRules(),
         "The final_summary block must be shown after all applicable prior blocks and must summarize scope, concept understanding, frontend target or skip reason, and nextPhasePreview.",
         "The frontend_experience block must clarify page operation paths before final_summary when UI or user-visible workflow applies: how users find or receive target objects, where actions start, and how results are observed.",
         ...frontendOperationPathClarificationRules(),
@@ -1294,7 +1299,7 @@ function createPhaseBrainstormSessionRequest(input: {
       ],
       blockConfirmationRules: {
         phase_scope: "Satisfied only after the user confirms current phase included, excluded, deferred scope and nextPhasePreview direction, including the recommended option when real alternative phase cuts were presented.",
-        concept_grounding: "Satisfied only after the user sees a dedicated concept and business-rules summary listing key concepts, business objects, operations on those objects, flow logic, rule boundaries, state changes, blocking reasons, and must-not-misinterpret-as guards when applicable, then confirms or corrects it.",
+        concept_grounding: "Satisfied only after the user sees a dedicated concept and business-rules summary listing key concepts, key business objects, key field sets, operations on those objects, operation inputs, flow logic, rule boundaries, state changes, blocking reasons, visible feedback, source refs, and must-not-misinterpret-as guards when applicable, then confirms or corrects it.",
         frontend_experience: "Satisfied only after the user sees a dedicated frontend target question or summary covering UI need, experience level, main users/workflows, how users find or receive target objects, action entry points, result/refresh feedback, and explicit unacceptable shapes, then confirms or corrects it.",
         final_summary: "Satisfied only after the user sees a combined final summary, including business-detail and page-operation-path confirmation when applicable or a concrete not-applicable reason when not applicable, and confirms it after the prior applicable blocks.",
       },
@@ -1355,6 +1360,10 @@ function createPhaseBrainstormSessionRequest(input: {
           ],
           requiredUserVisibleTopicsWhenApplicable: [
             "current phase flows",
+            "key business objects",
+            "key field sets per object",
+            "supported operations per object",
+            "operation inputs",
             "preconditions per flow",
             "validation rules",
             "blocking rules and blocking reasons",
@@ -1369,8 +1378,14 @@ function createPhaseBrainstormSessionRequest(input: {
             scopeIncludedItems: "modules/actions/rules/fields/boundaries",
             acceptanceStatements: "verifiable business outcomes",
             businessFlowSummary: "flow steps, preconditions, validation/blocking, success state",
-            conceptGrounding: "high-risk concepts, object operations, hard rules, state changes, blocking reasons, misunderstanding boundaries",
+            conceptGrounding: "high-risk concepts, key business objects, object field sets, object operations, operation inputs, hard rules, state changes, blocking reasons, visible feedback, misunderstanding boundaries",
             frontendExperience: "target discovery, selection, input, display, action entry, refresh, and feedback expectations",
+          },
+          objectOperationContract: {
+            owningBlock: "concept_grounding",
+            userLanguageRule: "Use natural user-facing wording in the conversation; do not expose internal schema field names as if they were user choices.",
+            candidateFields: ["scope.included[].items", "acceptance[].statement", "domainModel.businessFlows[].summary", "conceptGrounding.phaseConceptGrounding.concepts[].explanation", "frontendExperience/frontendExperienceDelta when UI applies"],
+            rules: businessObjectOperationCandidateRules(),
           },
           frontendOperationPathContract: {
             owningBlock: "frontend_experience",
@@ -1484,7 +1499,7 @@ function createPhaseBrainstormSessionRequest(input: {
             initialRequestOnly: false,
             summaryPresentedToUser: true,
             confirmedAfterSummary: true,
-            presentedItems: ["currentPhaseScopeSummary", "includedDeferredExcludedBoundary", "nextPhasePreview", "conceptSummary"],
+            presentedItems: ["currentPhaseScopeSummary", "includedDeferredExcludedBoundary", "nextPhasePreview", "conceptSummary", "businessObjectOperationSummary"],
           },
         },
         conceptGrounding: {
@@ -1495,7 +1510,7 @@ function createPhaseBrainstormSessionRequest(input: {
               conceptId: `concept-${input.phase.phaseId}-001`,
               term: "Current phase key concept",
               normalizedName: "current_phase_key_concept",
-              explanation: "Plain explanation shown to the user.",
+              explanation: "Plain explanation shown to the user, including current-phase object semantics, key field meaning, supported operations, operation inputs, validation or blocking rules, state transition expectations, visible feedback, and implementation misunderstanding boundaries when applicable.",
               mustNotMisinterpretAs: ["Incorrect interpretation"],
               phaseRelevance: "current",
               priority: "must_understand",
@@ -1647,7 +1662,7 @@ function createPhaseBrainstormSessionRequest(input: {
           "Do not show internal frontend enum values to the user during clarification. Use natural language when asking or summarizing.",
           "When deriving sources for this phase, read sourceFieldAccessHints: phase continuation input sources come from deliveryContextRef .sources[].sourceId/type and candidate output sources also use sources[].sourceId/type.",
           "Required clarification blocks must not be merged: phase_scope mentions are context only and do not satisfy concept_grounding or frontend_experience.",
-          "Set conceptConfirmation.shownToUser=true only after a dedicated concept_grounding block showed concept terms, meanings, and must-not-misinterpret-as guards to the user.",
+          "Set conceptConfirmation.shownToUser=true only after a dedicated concept_grounding block showed the user key business objects, key field sets, supported operations, operation inputs, preconditions, validation or blocking reasons, success state changes, visible feedback, source refs, and must-not-misinterpret-as guards when domain behavior applies.",
           "Set frontend_experience confirmed only after a dedicated frontend_experience block showed the UI target or skip reason to the user.",
           "Set finalSummaryConfirmed=true only after a dedicated final_summary block summarized scope, concepts, frontend target, nextPhasePreview, and business-detail confirmation when applicable.",
           "If the current phase involves business flows, user operations, state changes, forms/fields, validation/blocking rules, or frontend/backend interaction, final_summary and candidate fields must preserve those details using existing fields; do not leave them for PGC, AAC, TaskPlan, or TaskExecution to rediscover from the original requirement.",

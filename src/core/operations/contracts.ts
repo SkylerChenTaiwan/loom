@@ -2331,7 +2331,7 @@ function architectureSectionGenerationRules(rules: string[] = []): string[] {
   return [
     ...architectureAllowedRefGenerationRules(),
     "Use request.contextProjection.requirementDetailTransfer as the current phase requirement-detail transfer contract, and sourceRefs.planningContractRef as the full authority when more detail is needed.",
-    "Do not collapse PGC phaseScope items, acceptance statement/sourceRefs/capabilityRefs, business flow summaries, concept refs, or frontend refs into generic module labels.",
+    "Do not collapse PGC phaseScope items, acceptance statement/sourceRefs/capabilityRefs, business flow summaries, concept refs, object field sets, operation rules, state changes, blocking reasons, or frontend refs into generic module labels.",
     ...rules,
   ];
 }
@@ -2368,6 +2368,23 @@ function requirementDetailTransferProjection(pgc: PlanningGenerationContract): R
       sourceRefs: item.sourceRefs ?? [],
     })),
     businessFlowDetails: pgc.planningInputs.businessFlows,
+    objectOperationDetailRules: {
+      sourceFields: [
+        "currentPhaseScope.included[].items",
+        "acceptanceDetails[].statement",
+        "businessFlowDetails[].summary",
+        "conceptRefs.phaseConceptGroundingRef",
+        "frontendExperienceDetails when UI applies",
+      ],
+      preservationRule: "Treat Brainstorm-confirmed business objects, key field sets, object operations, operation inputs, preconditions, validation/blocking reasons, success state changes, and visible feedback as current-phase requirement details that AAC sections must preserve.",
+      sectionMapping: {
+        domain_contract: "Represent business objects as entities or reference projections; represent key field sets as entity fields, interface schemas, constraints, relationships, and data rules.",
+        behavior: "Represent object operations as userFlows/stateMachines with preconditions, guards, blocking reasons, effects, success state changes, and feedback.",
+        frontend_experience: "Represent object operation paths as data views, actions, operation paths, visible states, and refresh/readback expectations when UI applies.",
+        coverage: "Map acceptance statements to the AAC artifacts that carry the object, field, operation, state, blocking, and feedback details.",
+      },
+      insufficientDetailRule: "If Brainstorm/PGC confirms a required object-operation detail but no AAC artifact can represent it, write blocked output for the affected section rather than silently omitting the detail.",
+    },
     frontendExperienceDetails: {
       frontendExperience: pgc.planningInputs.frontendExperience ?? null,
       frontendExperienceDelta: pgc.planningInputs.frontendExperienceDelta ?? null,
@@ -2390,8 +2407,8 @@ function requirementDetailTransferProjection(pgc: PlanningGenerationContract): R
       currentFrontendExperienceRef: pgc.contextRefs?.currentFrontendExperienceRef ?? null,
     },
     consumeInSections: {
-      domain_contract: "Represent fields, entities, relationships, constraints, request/response/error schemas, and interface rules from PGC scope items, acceptance details, and business flow summaries.",
-      behavior: "Represent flow steps, preconditions, validation/blocking rules, blocking reasons, outcomes, state changes, guards, and effects from PGC business flow and acceptance details.",
+      domain_contract: "Represent fields, entities, relationships, constraints, request/response/error schemas, and interface rules from PGC scope items, acceptance details, business flow summaries, and objectOperationDetailRules.",
+      behavior: "Represent object operations, flow steps, preconditions, validation/blocking rules, blocking reasons, outcomes, state changes, guards, effects, and visible feedback from PGC business flow and acceptance details.",
       frontend_experience: "Represent required input, display, feedback, navigation, target discovery/selection, action entry, refresh policy, and operation path expectations from PGC frontendExperienceDetails and frontend refs.",
       coverage: "Map each acceptance detail to current AAC artifacts and verification hints without dropping rule, field, state, or source-ref context.",
     },
@@ -2602,8 +2619,10 @@ function domainContractSectionContentShape(): Record<string, unknown> {
 function domainContractSectionGenerationRules(): string[] {
   return [
     "This phase's AAC must be self-contained for later TaskPlan/TaskExecution refs.",
-    "Use request.contextProjection.requirementDetailTransfer.currentPhaseScope.included[].items, acceptanceDetails, and businessFlowDetails as the current phase domain-detail source.",
+    "Use request.contextProjection.requirementDetailTransfer.currentPhaseScope.included[].items, acceptanceDetails, businessFlowDetails, and objectOperationDetailRules as the current phase domain-detail source.",
     "When PGC details name required fields, validation rules, blocking reasons, status values, source-grounded business constraints, or API data that frontend/backend tasks must share, represent them in content.dataModel.entities[].fields, entity/global constraints, interfaces requestSchema/responseSchema/errorSchema, and relationships as appropriate.",
+    "When Brainstorm/PGC details name key field sets, preserve the fields as identity/input/display/relationship/status/result-feedback responsibilities in entities, constraints, relationships, interfaces, or assumptions. Do not leave them only as prose module notes.",
+    "When Brainstorm/PGC details name operations on an object, make the domain artifacts sufficient for behavior and task planning: identify the entities, field schemas, constraints, and interface data needed by each operation.",
     "For user-facing workflows, design interfaces around the workflow/surface responsibilities rather than only module labels: read_model interfaces load/query/select target data, command interfaces submit user actions, and readback interfaces refresh the result or status after the action when needed.",
     "When frontendExperienceDetails or frontendExperience operation paths declare dataViews/actions/operationPaths, map them to interface roles where applicable: dataViews usually need read_model or component_binding, actions usually need command, and post-action refresh/status observation may need readback. If the phase is backend-only or UI is intentionally deferred, state that through interface roles and behavior instead of inventing frontend consumers.",
     "Each interface should expose the request, response, and error fields needed by the workflow step or operation path it supports. Do not collapse a list/query/readback protocol into a single vague service interface when the current phase needs user-visible data selection or refreshed state.",
@@ -2694,8 +2713,9 @@ function behaviorSectionContentShape(): Record<string, unknown> {
 
 function behaviorSectionGenerationRules(): string[] {
   return [
-    "Use request.contextProjection.requirementDetailTransfer.businessFlowDetails and acceptanceDetails as the current phase behavior-detail source.",
-    "For each applicable current phase flow, represent trigger/action steps, preconditions, validation or blocking rules, blocking reasons, success outcomes, state changes, guards, effects, and user/system feedback in content.userFlows and content.stateMachines.",
+    "Use request.contextProjection.requirementDetailTransfer.businessFlowDetails, acceptanceDetails, and objectOperationDetailRules as the current phase behavior-detail source.",
+    "For each applicable current phase object operation, represent trigger/action steps, operation inputs, preconditions, validation or blocking rules, blocking reasons, success outcomes, state changes, guards, effects, and user/system feedback in content.userFlows and content.stateMachines.",
+    "If a confirmed operation has blocking reasons or state changes, do not model it only as a happy-path userFlow; include guards/effects/rules that TaskPlan can assign and Review can verify.",
     "If PGC says a flow is not applicable because the phase is non-domain technical work, express the technical workflow instead of fabricating business states.",
     "Use only artifact ids declared in the current request's accepted/created section candidates.",
     "Every userFlows[].entityRefs and stateMachines[].entityRefs value must come from the current domain_contract.content.dataModel.entities[].entityId.",

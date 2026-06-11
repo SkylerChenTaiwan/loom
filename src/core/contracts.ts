@@ -20,6 +20,7 @@ const referencedArtifactReadGuideSchema = z.array(z.object({
   purpose: z.string().min(1),
   requiredSelectors: stringArraySchema,
   optionalSelectors: stringArraySchema.optional(),
+  usageRule: z.string().min(1).optional(),
   doNotGuessAlternateRoots: z.literal(true),
   nullSelectorHandling: z.string().min(1),
 }));

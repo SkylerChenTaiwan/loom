@@ -25,9 +25,32 @@ export function brainstormCandidateSelfReviewRules(): string[] {
     "Self-review must verify that confirmed requirement details are stored in existing BrainstormCandidate fields rather than only in chat: scope.included[].items, acceptance[].statement, domainModel.businessFlows[].summary, conceptGrounding, frontendExperience/frontendExperienceDelta, and phasePlan.nextPhasePreview.",
     "Self-review must check that scope items name concrete objects, actions, rules, fields, states, or boundaries when those details were confirmed.",
     "Self-review must check that acceptance statements are executable outcomes and that businessFlows summarize flow steps, preconditions, validation or blocking rules, blocking reasons, success state, and input/display/pass-through fields when applicable.",
+    "Self-review must check that domain phases preserve a natural-language object-operation summary: key business objects, key field sets, supported operations, operation inputs, preconditions, validation or blocking reasons, success state changes, and user-visible feedback.",
     "Self-review must check that user-facing workflow phases store page operation paths in frontendExperience/frontendExperienceDelta: how users find or receive the target object, which view/action starts the operation, and how success, empty, error, or business-blocking results are observed.",
     "If self-review finds that a required detail is unclear or missing from the existing fields, return to the relevant Brainstorm block and ask the user before submitting; do not let PGC, AAC, TaskPlan, or TaskExecution rediscover that detail later.",
     "Do not create a separate Markdown spec, commit, or parallel requirement artifact for this self-review; the accepted BrainstormCandidate remains the requirement contract.",
+  ];
+}
+
+export function businessObjectOperationClarificationRules(): string[] {
+  return [
+    "The concept_grounding block owns business object and operation-rule clarification for domain phases; do not wait until final_summary to first expose object fields or operation logic.",
+    "When the current phase includes business objects, user operations, system operations, forms, persistence, state changes, or validation/blocking rules, present a natural-language object-operation summary before asking the user to confirm concepts.",
+    "For each key business object in the current phase, list the key field set that the phase depends on: identity fields, input fields, display fields, relationship fields, state fields, and result or feedback fields. Use source-confirmed names when available; if a category is unclear, state the missing detail as a question or unresolved note instead of inventing fields.",
+    "For each operation on a key object, summarize the operation input, preconditions, validation rules, blocking conditions, blocking reasons, success outcome, state changes, and user-visible feedback that the downstream implementation must preserve.",
+    "Every object field, operation rule, state change, and blocking reason shown in concept_grounding must point back to original requirements, confirmed user decisions, repository facts, or an explicit unresolved clarification note. Keyword hints are advisory only.",
+    "Do not present only noun definitions or broad concept summaries when business operations are in scope; the user must be able to confirm whether the object fields and operation logic are correct before frontend_experience and final_summary.",
+    "If the current phase is purely technical, infrastructure, build, deployment, or non-domain work, state why object-operation clarification is not applicable and keep conceptGrounding limited to real high-risk technical concepts.",
+  ];
+}
+
+export function businessObjectOperationCandidateRules(): string[] {
+  return [
+    "Store confirmed object-operation details in existing BrainstormCandidate fields rather than a parallel artifact: scope.included[].items, acceptance[].statement, domainModel.businessFlows[].summary, conceptGrounding.phaseConceptGrounding.concepts[].explanation, frontendExperience/frontendExperienceDelta when UI applies, and phasePlan.nextPhasePreview when details are deferred.",
+    "scope.included[].items should include the current phase business objects, supported operations, key field sets, validation/blocking rules, state changes, and explicit boundaries when those details were confirmed.",
+    "domainModel.businessFlows[].summary should describe object operation flow steps with inputs, preconditions, validation/blocking reasons, success state changes, and visible feedback; it must not be only a flow title.",
+    "conceptGrounding.phaseConceptGrounding.concepts[].explanation should capture high-risk object semantics, key field meaning, operation invariants, state transition rules, and misunderstanding boundaries that tasks must preserve.",
+    "acceptance[].statement should be executable against the confirmed object-operation details, including field, rule, state, feedback, or source-ref expectations when applicable.",
   ];
 }
 
@@ -65,8 +88,10 @@ export function brainstormRequirementSemanticRules(): string[] {
     "For technical or non-domain phases, do not fabricate domain rules; instead express technical workflow, constraints, boundaries, expected behavior, and verification responsibilities in scope, acceptance, domainModel.businessFlows when useful, and conceptGrounding only when there are real high-risk concepts.",
     "Every current-phase acceptance statement must be source-grounded: cite sourceRefs from original requirements, confirmed decisions, user confirmation, or repository facts as appropriate; keywordHints are never acceptance authority.",
     "If a required semantic detail for the confirmed current phase is unclear after reading the provided refs, ask the user in the relevant Brainstorm block before accepting; do not let downstream PGC/AAC/TaskPlan rediscover missing requirement rules from scratch.",
-    "concept_grounding must cover confirmed business objects, operations on those objects, key flow logic, rule boundaries, state transitions, and blocking reasons when those details are relevant; it must not become only a glossary of nouns.",
+    "concept_grounding must cover confirmed business objects, key object field sets, operations on those objects, operation inputs, key flow logic, rule boundaries, state transitions, blocking reasons, and user-visible feedback when those details are relevant; it must not become only a glossary of nouns.",
     "frontendExperience/frontendExperienceDelta is required only for UI or user-visible workflow phases; conceptGrounding may be none_required or not_applicable only with a concrete reason.",
+    ...businessObjectOperationClarificationRules(),
+    ...businessObjectOperationCandidateRules(),
     ...frontendOperationPathClarificationRules(),
     ...frontendOperationPathCandidateRules(),
   ];

@@ -206,6 +206,7 @@ function createDeferredScopeNonePreviewCandidate(request) {
           "includedDeferredExcludedBoundary",
           "nextPhasePreview",
           "conceptSummary",
+          "businessObjectOperationSummary",
         ],
       },
     },
