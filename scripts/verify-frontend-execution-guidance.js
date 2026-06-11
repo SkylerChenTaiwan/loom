@@ -237,6 +237,7 @@ function writeFrontendDeliveryFixture(root) {
       interfaceId: "if-booking-form",
       name: "BookingForm",
       type: "component",
+      role: "component_binding",
       moduleRefs: ["module-booking-ui"],
       entityRefs: ["entity-booking"],
       scopeRefs: ["scope-booking"],
@@ -245,6 +246,7 @@ function writeFrontendDeliveryFixture(root) {
       interfaceId: "if-create-booking",
       name: "Create booking API",
       type: "http_api",
+      role: "command",
       moduleRefs: ["module-booking-ui"],
       entityRefs: ["entity-booking"],
       scopeRefs: ["scope-booking"],
@@ -530,6 +532,10 @@ try {
   assert.equal(guidance?.operationPathsInScope?.[0]?.selectionSummary.includes("booking form"), true);
   assert.equal(guidance?.operationPathWarnings?.length, 0);
   assert.deepEqual(guidance?.dataBindingExpectation?.interfacesInScope, ["if-create-booking", "if-booking-form"]);
+  assert.deepEqual(
+    guidance?.dataBindingExpectation?.interfaceRolesInScope?.map((item) => [item.interfaceRef, item.role]),
+    [["if-create-booking", "command"], ["if-booking-form", "component_binding"]],
+  );
   assert.equal(guidance?.dataBindingExpectation?.requiredModeForSatisfaction, "wired");
   assert.deepEqual(guidance?.dataBindingExpectation?.closureRequirementIds, ["closure:flow-submit-booking:step-submit"]);
   assert.equal(guidance?.workflowClosureRequirements?.length, 1, "frontend guidance must project workflow closure requirements for assigned closure tasks.");
@@ -548,6 +554,7 @@ try {
   assert.equal(binding.userAction, "Fill booking details and submit");
   assert.equal(binding.interfaces.length, 1);
   assert.equal(binding.interfaces[0].interfaceId, "if-create-booking");
+  assert.equal(binding.interfaces[0].role, "command");
   assert.equal(binding.interfaces[0].method, "POST");
   assert.equal(binding.interfaces[0].path, "/api/bookings");
   assert.deepEqual(binding.interfaces[0].requestSchema, [{ fieldId: "field-customer-name", name: "customerName", type: "string", required: true }]);
@@ -586,6 +593,7 @@ try {
   const projection = fieldValue(projectionRead, "sourceContext.architectureArtifactProjection");
   assert.equal(projection.projectionCompleteness?.includesTaskRelevantDescriptions, true, "AAC projection must declare task-relevant detail completeness.");
   assert.deepEqual(projection.interfaceContracts?.find((item) => item.interfaceId === "if-create-booking")?.requestSchema, [{ fieldId: "field-customer-name", name: "customerName", type: "string", required: true }]);
+  assert.equal(projection.interfaceContracts?.find((item) => item.interfaceId === "if-create-booking")?.role, "command");
   assert.equal(projection.userFlowDetails?.[0]?.steps?.[0]?.systemResponse, "Booking result appears", "AAC projection must include user flow step response.");
   assert.equal(projection.userFlowDetails?.[0]?.outcomes?.[0]?.description, "Booking is accepted.", "AAC projection must include user flow outcomes.");
   assert.equal(projection.frontendOperationPathDetails?.operationPaths?.[0]?.pathId, "path-submit-booking", "AAC projection must include task-relevant operation paths.");

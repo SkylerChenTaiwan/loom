@@ -430,6 +430,15 @@ export const frontendExperienceContractSchema = z.object({
   notes: stringArraySchema,
 });
 
+export const interfaceRoleSchema = z.enum([
+  "read_model",
+  "command",
+  "readback",
+  "component_binding",
+  "external_contract",
+  "unknown",
+]);
+
 export const runtimeDeliveryStatusSchema = z.enum(["modified", "unchanged", "not_applicable"]);
 export const runtimeDeliveryCodegenRequiredSchema = z.enum(["yes", "no", "if_applicable"]);
 export const runtimeDeliveryVerificationBoundarySchema = z.literal("code_level_only");
@@ -641,6 +650,7 @@ export const architectureArtifactContractSchema = z.object({
     interfaceId: z.string().min(1),
     name: z.string().min(1),
     type: z.enum(["http_api", "service_method", "component", "cli_command", "event", "job", "external_adapter"]),
+    role: interfaceRoleSchema.optional(),
     moduleRefs: refsSchema,
     entityRefs: refsSchema,
     scopeRefs: refsSchema,

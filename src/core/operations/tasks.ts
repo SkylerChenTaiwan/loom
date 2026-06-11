@@ -2132,6 +2132,7 @@ function frontendBindingInterfaceContract(contract: ArchitectureArtifactContract
     interfaceId: contract.interfaceId,
     name: contract.name,
     type: contract.type,
+    role: contract.role ?? null,
     moduleRefs: contract.moduleRefs,
     entityRefs: contract.entityRefs,
     scopeRefs: contract.scopeRefs,
@@ -2379,6 +2380,16 @@ function buildFrontendExecutionGuidance(task: Task, aac: ArchitectureArtifactCon
     ...workflowRefsInScope.flatMap((flowRef) => flowById.get(flowRef)?.interfaceRefs ?? []),
   ]);
   const interfaceRefSet = new Set(interfaceRefsInScope);
+  const interfaceById = new Map(aac.interfaces.map((contract) => [contract.interfaceId, contract]));
+  const interfaceRolesInScope = interfaceRefsInScope.map((interfaceRef) => {
+    const contract = interfaceById.get(interfaceRef);
+    return {
+      interfaceRef,
+      role: contract?.role ?? "unknown",
+      method: contract?.method ?? null,
+      path: contract?.path ?? null,
+    };
+  });
   const bindingProjection = buildFrontendBackendBindingProjection(task, aac, frontendExperience, workflowRefsInScope);
   const operationPathProjection = frontendOperationPathProjection(
     frontendExperience,
@@ -2430,6 +2441,7 @@ function buildFrontendExecutionGuidance(task: Task, aac: ArchitectureArtifactCon
     mustNot: frontendExperience.mustNot,
     dataBindingExpectation: {
       interfacesInScope: interfaceRefsInScope,
+      interfaceRolesInScope,
       allowedModes: ["wired", "mocked_with_reason", "static_only_with_reason", "not_applicable"],
       ...(workflowClosureRequirements.length > 0 ? {
         requiredModeForSatisfaction: "wired",
@@ -3070,8 +3082,9 @@ function taskResultSchemaShape(taskPlan: TaskPlan, task: Task): Record<string, u
           modeRule: "When closureRequirementIds is non-empty, status=satisfied requires mode=wired. mocked_with_reason/static_only_with_reason/not_applicable cannot be satisfied for these closure requirements.",
         } : {}),
         interfaceRefs: ["AAC interface refs actually used or verified by this task; this is evidence, not a validator allowlist"],
+        interfaceRolesCovered: ["read_model | command | readback | component_binding | external_contract | unknown"],
         evidenceRefs: ["project-relative refs"],
-        notes: ["which user actions were wired to interfaces, or why binding remains a known gap"],
+        notes: ["which user actions were wired to read_model/command/readback interfaces, or why binding remains a known gap"],
       },
       ...(workflowClosureRequirements.length > 0 ? {
         workflowClosureRequirements,
@@ -3324,6 +3337,7 @@ function buildArchitectureProjection(aac: ArchitectureArtifactContract, task: Ta
         interfaceId: item.interfaceId,
         name: item.name,
         type: item.type,
+        role: item.role ?? null,
         method: item.method,
         path: item.path,
       })),
@@ -3333,6 +3347,7 @@ function buildArchitectureProjection(aac: ArchitectureArtifactContract, task: Ta
         interfaceId: item.interfaceId,
         name: item.name,
         type: item.type,
+        role: item.role ?? null,
         moduleRefs: item.moduleRefs,
         entityRefs: item.entityRefs,
         scopeRefs: item.scopeRefs,
@@ -4229,6 +4244,7 @@ function buildTaskGenerationRules(aac?: ArchitectureArtifactContract): Record<st
         "verificationIntents[].behavior must describe the concrete behavior to verify, not only repeat an acceptance id or module label.",
         "writeBoundary.artifactRefs must point to the AAC artifacts that carry the task detail; do not leave artifactRefs empty for implementation tasks when matching AAC artifacts exist.",
         "When architectureDetails.frontendOperationPathDetails.operationPaths is non-empty, assign target discovery, action entry, refresh/result observation, and feedback responsibilities to frontend or integration tasks through frontendExperienceRequirement.",
+        "When AAC interfaces include role=read_model, role=command, or role=readback for the same frontend workflow or operation path, TaskPlan must make producer implementation, frontend consumer wiring, and post-action readback/refresh verification responsibilities explicit in one coherent task or dependent task group.",
         "If required detail exists in PGC but no AAC artifact can carry it, write blocked output with blockedReasonCode AAC_INSUFFICIENT.",
       ],
     },
@@ -4275,6 +4291,7 @@ function buildTaskGenerationRules(aac?: ArchitectureArtifactContract): Record<st
         "If frontendExperience.required=true, include frontend task coverage for the current phase UI surfaces.",
         "Do not treat frontend_experience as a visual preference only; it is a delivery contract for usable UI structure.",
         "When frontendExperience.dataViews/actions/operationPaths are present, TaskPlan must make those operation-path responsibilities visible in task objectives, verificationIntents, and frontendExperienceRequirement; do not reduce them to a generic UI shell task.",
+        "If a task owns a frontend operation path with interfaces in scope, its verificationIntents should cover the user-visible read model, the submitted command, and the result readback/refresh or status observation when those interface roles are declared in AAC.",
         ...frontendImplementationOrganizationRules,
         "Do not block small API-only phases when frontendExperience.required=false.",
       ],
@@ -4304,6 +4321,7 @@ function buildTaskGenerationRules(aac?: ArchitectureArtifactContract): Record<st
       rules: [
         "Use contextProjection.requirementDetailTransfer.workflowClosureRequirements as the exact workflow closure requirement list.",
         "For each closure requirement, create or update tasks so the user action, declared interface invocation, state/persistence change, and success/blocking feedback are owned by executable tasks.",
+        "When closure requirement interfaces include read_model/command/readback roles, assigned tasks must state which role each task implements or verifies; do not approve a static frontend consumer when the command/readback wiring is still a known gap.",
         "Do not satisfy a workflow closure requirement with a static or demo-only UI task.",
         "Do not split closure into unrelated backend-only and static frontend-only tasks without a task that owns the user-action-to-interface wiring and verification responsibility.",
         "The assigned task may be ui_flow_increment, frontend_experience, integration_increment, or feature_increment; taskKind is less important than the coverage shape above.",
