@@ -240,6 +240,18 @@ function verifyGreenfieldRequestGuidance() {
     assert.equal(request.selectionGuidance.commonOptions.backend.label, "Backend / service");
     assert.ok(request.selectionGuidance.commonOptions.backend.examples.includes("Java (Spring Boot)"));
     assert.equal(request.selectionGuidance.trackModel.customTechnologyPolicy.includes("not a whitelist"), true);
+    assert.match(request.selectionGuidance.recommendationBasis.authority, /complete BrainstormContract/);
+    assert.match(request.selectionGuidance.recommendationBasis.currentPhaseLensRole, /first implementation slice only/);
+    assert.ok(request.selectionGuidance.recommendationBasis.mustRead.includes("roadmap phases, deferred scope, and known next-phase previews"));
+    assert.ok(request.selectionGuidance.userFacingConfirmationProtocol.mandatorySections.some((section) => /Adjustable technology range/.test(section)));
+    assert.ok(request.selectionGuidance.userFacingConfirmationProtocol.mandatorySections.some((section) => /Reply format/.test(section)));
+    assert.ok(request.selectionGuidance.userFacingConfirmationProtocol.wordingRules.some((rule) => /Do not use db or orm as the primary reply keys/.test(rule)));
+    assert.match(request.selectionGuidance.replyProtocolForUser.partialAdjustmentExample, /persistence=PostgreSQL/);
+    assert.match(request.selectionGuidance.replyProtocolForUser.partialAdjustmentExample, /dataAccess=Spring Data JPA/);
+    assert.doesNotMatch(request.selectionGuidance.replyProtocolForUser.partialAdjustmentExample, /\bdb=/);
+    assert.doesNotMatch(request.selectionGuidance.replyProtocolForUser.partialAdjustmentExample, /\borm=/);
+    assert.ok(request.generationProtocol.technicalBaselineSourceRules.some((rule) => /complete BrainstormContract product scope/.test(rule)));
+    assert.ok(request.generationProtocol.technicalBaselineSourceRules.some((rule) => /user-facing sections/.test(rule)));
     assert.equal(request.decisionNeeds.includes("test strategy"), false);
     assert.equal(request.decisionNeeds.includes("local dev and deploy strategy"), false);
     assert.match(String(request.outputContract.schemaShape.status), /confirmed only after explicit user technical-baseline confirmation/);

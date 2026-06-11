@@ -245,6 +245,33 @@ function technicalBaselineSelectionGuidance(input: {
       coreTracks: ["web", "app", "backend", "persistence", "dataAccess", "externalServices"],
       customTechnologyPolicy: "Common options are examples, not a whitelist. User-specified technologies outside these examples are allowed, but mark the relevant track source as user_specified or user_custom and include it in the final confirmation summary and reasoningSummary.",
     },
+    recommendationBasis: {
+      authority: "Use the complete BrainstormContract as the product-scope authority for the first greenfield TechnicalBaseline recommendation.",
+      mustRead: [
+        "contextRefs.brainstormContractRef summary and deliveryContext.originalRequest",
+        "scope.included, scope.deferred, scope.excluded, and assumptions",
+        "domainModel capability groups and business flows",
+        "frontendExperience or frontendExperienceDelta when present",
+        "roadmap phases, deferred scope, and known next-phase previews",
+      ],
+      currentPhaseLensRole: "currentPhaseLens identifies the first implementation slice only. Do not choose the initial technology baseline from the current phase scope alone when the full requirement or roadmap implies later product surfaces, persistence scale, app clients, services, integrations, or operational needs.",
+      recommendationRule: "Recommend a stable baseline for the full confirmed delivery/roadmap horizon; explain when the current phase can start small inside that baseline without hiding later known needs.",
+    },
+    userFacingConfirmationProtocol: {
+      mandatorySections: [
+        "Recommendation basis: summarize the full requirement/roadmap signals used, not only the current phase.",
+        "Recommended final baseline: list every core track with selection and short rationale.",
+        "Adjustable technology range: show common examples for every core track so the user knows how to modify the recommendation.",
+        "Reply format: show canonical key=value examples using web, app, backend, persistence, dataAccess, and externalServices.",
+        "Final confirmation rule: if the user changes anything, summarize the final baseline and ask for explicit confirmation before submitting.",
+      ],
+      wordingRules: [
+        "Do not present the recommendation as based only on the first phase or current small implementation slice.",
+        "Do not omit the adjustable technology range.",
+        "Do not use db or orm as the primary reply keys; use persistence and dataAccess in the primary examples.",
+        "It is fine to understand db as persistence and orm as dataAccess when the user writes those aliases, but normalize the final candidate to stack.tracks.persistence and stack.tracks.dataAccess.",
+      ],
+    },
     commonOptions: {
       web: {
         label: "Web client",
@@ -282,8 +309,8 @@ function technicalBaselineSelectionGuidance(input: {
     ],
     replyProtocolForUser: {
       acceptRecommendation: "确认推荐方案",
-      partialAdjustmentExample: "web=Vue+Vite, backend=Java+Spring Boot, db=PostgreSQL, orm=Spring Data JPA, app=不需要",
-      fullCustomExample: "web=React+Vite, app=React Native+Expo, backend=Fastify, db=SQLite, orm=Prisma, external=不需要",
+      partialAdjustmentExample: "web=Vue+Vite, backend=Java+Spring Boot, persistence=PostgreSQL, dataAccess=Spring Data JPA, app=不需要, externalServices=不需要",
+      fullCustomExample: "web=React+Vite, app=React Native+Expo, backend=Fastify, persistence=SQLite, dataAccess=Prisma, externalServices=不需要",
       finalConfirmationPrompt: "When the user did not directly accept the recommendation, present a final technology baseline summary and ask them to reply 确认技术栈 or 修改: ...",
     },
   };
@@ -346,7 +373,7 @@ export async function createTechnicalBaselineRequest(input: CreateTechnicalBasel
     agentAction: agentActionContract({
       actionKind: "generate_candidate",
       instruction: selectionGuidance
-        ? "Generate the final TechnicalBaseline candidate only after the required user technical-baseline confirmation is complete. Write it to outputContract.candidateFile, then run submitCommand exactly."
+        ? "Follow selectionGuidance.userFacingConfirmationProtocol first. Generate the final TechnicalBaseline candidate only after the required user technical-baseline confirmation is complete. Write it to outputContract.candidateFile, then run submitCommand exactly."
         : "Generate one TechnicalBaseline candidate from this request, write it to outputContract.candidateFile, then run submitCommand exactly.",
       read: {
         required: ["this request", "referencedArtifactReadGuide", "contextRefs.brainstormContractRef", ...requiredContextReadFields, ...selectionGuidanceReadFields, "currentPhaseLens", "decisionNeeds", "constraints", "enumRefs", "outputContract.schemaShape"],
@@ -432,6 +459,8 @@ export async function createTechnicalBaselineRequest(input: CreateTechnicalBasel
       technicalBaselineSourceRules: [
         ...(projectKind === "greenfield" ? [
           "For greenfield, read selectionGuidance. The CLI provides materials, examples, and confirmation rules only; you must understand the requirement, recommend the concrete technology baseline, and complete any user confirmation dialogue yourself before submitting a confirmed candidate.",
+          "For the first greenfield baseline, base the recommendation on the complete BrainstormContract product scope and roadmap/deferred scope, not only on currentPhaseLens. currentPhaseLens is only the first implementation slice.",
+          "Before asking the user to confirm, show the required user-facing sections from selectionGuidance.userFacingConfirmationProtocol: recommendation basis, recommended tracks, adjustable technology range, canonical reply format, and final confirmation rule.",
           "Do not submit a greenfield TechnicalBaseline candidate until the user explicitly confirms the final technology baseline. Intermediate recommendation/adjustment rounds stay in the chat and are not CLI interactions.",
           "Testing, build, local run, and deployment preparation are derived later by AAC runtime_delivery, TaskPlan, TaskExecution, and deploy; do not ask the user to choose them as first-screen technology tracks unless the user volunteers a preference.",
         ] : []),
