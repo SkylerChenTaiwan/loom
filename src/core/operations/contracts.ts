@@ -32,6 +32,7 @@ import {
   type DeliveryPhaseLocator,
   architectureContractPath,
   architectureCandidatePath,
+  architectureConstitutionContractPath,
   architectureLatestPath,
   architectureRequestPath,
   architectureSectionCandidatePath,
@@ -1898,6 +1899,14 @@ export async function loadPlanningContract(projectRoot: string, planningContract
 }
 
 export async function loadArchitectureArtifact(projectRoot: string, architectureArtifactContractId?: string, locator?: DeliveryPhaseLocator): Promise<ArchitectureArtifactContract> {
+  // Fork spike: prefer a project-level architecture constitution when present. It is the
+  // persistent, delivery-independent source of architectural truth, so consumers (review,
+  // taskplan, deployment) reconcile against it without depending on per-delivery locator
+  // uniqueness. The original per-delivery resolution stays as the fallback below.
+  const constitutionPath = architectureConstitutionContractPath(projectRoot);
+  if (await pathExists(constitutionPath)) {
+    return parseStored(architectureArtifactContractSchema, await readJsonFile(constitutionPath), constitutionPath);
+  }
   const resolvedLocator = locator ?? await getActiveLocator(projectRoot);
   const id = architectureArtifactContractId ?? await latestId(architectureLatestPath(projectRoot, resolvedLocator), "architectureArtifactContractId");
   if (!id) {

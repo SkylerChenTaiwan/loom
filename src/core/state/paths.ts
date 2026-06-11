@@ -217,6 +217,21 @@ export function architectureContractPath(projectRoot: string, architectureArtifa
   return path.join(deliveryDir(projectRoot, locator.deliveryId), "artifacts", "architecture", locator.phaseId, "aac.json");
 }
 
+// Project-level architecture constitution (fork spike): a persistent, delivery-independent
+// AAC location. These intentionally take no DeliveryPhaseLocator so the constitution is shared
+// across deliveries/phases instead of being pinned under deliveries/{id}/.../{phaseId}/.
+export function architectureConstitutionDir(projectRoot: string): string {
+  return path.join(resolveProjectRoot(projectRoot), LOOM_DIR, "contracts", "constitution");
+}
+
+export function architectureConstitutionContractPath(projectRoot: string): string {
+  return path.join(architectureConstitutionDir(projectRoot), "aac.json");
+}
+
+export function architectureConstitutionLatestPath(projectRoot: string): string {
+  return path.join(architectureConstitutionDir(projectRoot), "latest.json");
+}
+
 export function architectureLatestPath(projectRoot: string, locator?: DeliveryPhaseLocator): string {
   if (!locator) {
     throw new Error("architectureLatestPath requires delivery/phase locator.");
