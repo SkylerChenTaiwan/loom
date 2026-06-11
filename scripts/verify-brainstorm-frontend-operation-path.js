@@ -84,13 +84,13 @@ assertIncludes(
 );
 assertIncludes(
   request.clarificationConversationProtocol.blockConfirmationRules.concept_grounding,
-  "key field sets",
-  "concept_grounding confirmation must include object field-set semantics",
+  "inputs or fields",
+  "concept_grounding confirmation must include applicable inputs or fields",
 );
 assertIncludes(
   request.clarificationConversationProtocol.blockConfirmationRules.concept_grounding,
-  "operation inputs",
-  "concept_grounding confirmation must include operation inputs and rule semantics",
+  "actions or behaviors",
+  "concept_grounding confirmation must include applicable actions or behaviors",
 );
 assertIncludes(
   request.clarificationConversationProtocol.blockConfirmationRules.frontend_experience,
@@ -103,8 +103,8 @@ assert.ok(
 );
 assertIncludes(
   blockRules,
-  "key business objects, key field sets, supported operations",
-  "concept_grounding block must own object field and operation-rule clarification",
+  "map every confirmed scope.included item",
+  "concept_grounding block must own generic scope item coverage",
 );
 
 const semanticContract = request.rules.requirementSemanticGrounding.finalSummaryBusinessDetailContract;
@@ -121,8 +121,8 @@ assert.ok(
   "operation-path contract must map to frontendExperience.operationPaths",
 );
 assert.ok(
-  semanticContract.requiredUserVisibleTopicsWhenApplicable.includes("key field sets per object"),
-  "business-detail contract must require object field-set confirmation",
+  semanticContract.requiredUserVisibleTopicsWhenApplicable.includes("applicable inputs or fields"),
+  "business-detail contract must require applicable input or field confirmation",
 );
 assert.ok(
   semanticContract.objectOperationContract.candidateFields.includes("domainModel.businessFlows[].summary"),

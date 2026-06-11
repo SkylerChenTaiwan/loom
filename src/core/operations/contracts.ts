@@ -2376,6 +2376,7 @@ function requirementDetailTransferProjection(pgc: PlanningGenerationContract): R
         "conceptRefs.phaseConceptGroundingRef",
         "frontendExperienceDetails when UI applies",
       ],
+      scopeCoverageRule: "Every currentPhaseScope.included item should remain traceable through AAC coverage: represented by domain_contract, behavior, frontend_experience, coverage, or an explicit unresolved/deferred reason. Do not preserve only the items that look easiest to implement.",
       preservationRule: "Treat Brainstorm-confirmed business objects, key field sets, object operations, operation inputs, preconditions, validation/blocking reasons, success state changes, and visible feedback as current-phase requirement details that AAC sections must preserve.",
       sectionMapping: {
         domain_contract: "Represent business objects as entities or reference projections; represent key field sets as entity fields, interface schemas, constraints, relationships, and data rules.",
@@ -2383,7 +2384,7 @@ function requirementDetailTransferProjection(pgc: PlanningGenerationContract): R
         frontend_experience: "Represent object operation paths as data views, actions, operation paths, visible states, and refresh/readback expectations when UI applies.",
         coverage: "Map acceptance statements to the AAC artifacts that carry the object, field, operation, state, blocking, and feedback details.",
       },
-      insufficientDetailRule: "If Brainstorm/PGC confirms a required object-operation detail but no AAC artifact can represent it, write blocked output for the affected section rather than silently omitting the detail.",
+      insufficientDetailRule: "If Brainstorm/PGC confirms a required scope item or object-operation detail but no AAC artifact can represent it, write blocked output for the affected section rather than silently omitting the detail.",
     },
     frontendExperienceDetails: {
       frontendExperience: pgc.planningInputs.frontendExperience ?? null,
@@ -2410,7 +2411,7 @@ function requirementDetailTransferProjection(pgc: PlanningGenerationContract): R
       domain_contract: "Represent fields, entities, relationships, constraints, request/response/error schemas, and interface rules from PGC scope items, acceptance details, business flow summaries, and objectOperationDetailRules.",
       behavior: "Represent object operations, flow steps, preconditions, validation/blocking rules, blocking reasons, outcomes, state changes, guards, effects, and visible feedback from PGC business flow and acceptance details.",
       frontend_experience: "Represent required input, display, feedback, navigation, target discovery/selection, action entry, refresh policy, and operation path expectations from PGC frontendExperienceDetails and frontend refs.",
-      coverage: "Map each acceptance detail to current AAC artifacts and verification hints without dropping rule, field, state, or source-ref context.",
+      coverage: "Map each acceptance detail and confirmed scope item to current AAC artifacts and verification hints without dropping rule, field, state, unresolved-note, or source-ref context.",
     },
   };
 }

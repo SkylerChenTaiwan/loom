@@ -23,12 +23,31 @@ export function brainstormCandidateSelfReviewRules(): string[] {
   return [
     "Before writing or submitting BrainstormCandidate, perform a self-review against the final_summary and the confirmed phase_scope option.",
     "Self-review must verify that confirmed requirement details are stored in existing BrainstormCandidate fields rather than only in chat: scope.included[].items, acceptance[].statement, domainModel.businessFlows[].summary, conceptGrounding, frontendExperience/frontendExperienceDelta, and phasePlan.nextPhasePreview.",
+    "Self-review must verify that every confirmed scope.included item has been considered in the concept_grounding scope-item coverage summary. If a scope item has no applicable detail, the candidate must preserve the concrete reason or unresolved note instead of silently dropping it.",
     "Self-review must check that scope items name concrete objects, actions, rules, fields, states, or boundaries when those details were confirmed.",
     "Self-review must check that acceptance statements are executable outcomes and that businessFlows summarize flow steps, preconditions, validation or blocking rules, blocking reasons, success state, and input/display/pass-through fields when applicable.",
     "Self-review must check that domain phases preserve a natural-language object-operation summary: key business objects, key field sets, supported operations, operation inputs, preconditions, validation or blocking reasons, success state changes, and user-visible feedback.",
     "Self-review must check that user-facing workflow phases store page operation paths in frontendExperience/frontendExperienceDelta: how users find or receive the target object, which view/action starts the operation, and how success, empty, error, or business-blocking results are observed.",
     "If self-review finds that a required detail is unclear or missing from the existing fields, return to the relevant Brainstorm block and ask the user before submitting; do not let PGC, AAC, TaskPlan, or TaskExecution rediscover that detail later.",
     "Do not create a separate Markdown spec, commit, or parallel requirement artifact for this self-review; the accepted BrainstormCandidate remains the requirement contract.",
+  ];
+}
+
+export function scopeItemCoverageClarificationRules(): string[] {
+  return [
+    "The concept_grounding block must include a natural-language scope-item coverage summary before asking the user to confirm concepts.",
+    "For each confirmed scope.included item, state what requirement detail is covered for that item using only applicable dimensions: object or subject, user/system action or behavior, inputs or fields, preconditions, validation or blocking conditions and reasons, success state/data/UI/API/result changes, visible or returned feedback, source refs, and unresolved notes.",
+    "Do not force every dimension onto every scope item. If a dimension is not applicable to that scope item, omit it or give a short concrete reason; if it is applicable but source information is insufficient, mark it as unresolved or ask a focused clarification.",
+    "Do not use a fixed capability taxonomy or test-scenario categories when presenting the coverage summary. The coverage rows should follow the confirmed scope wording and the source facts.",
+    "If a scope item was confirmed in phase_scope but does not appear in the scope-item coverage summary, do not proceed to frontend_experience or final_summary. Return to concept_grounding and cover or explicitly defer that item.",
+  ];
+}
+
+export function scopeItemCoverageCandidateRules(): string[] {
+  return [
+    "Store the confirmed scope-item coverage in existing BrainstormCandidate fields, not a new parallel model: scope.included[].items, acceptance[].statement, domainModel.businessFlows[].summary, conceptGrounding.phaseConceptGrounding.concepts[].explanation, and frontendExperience/frontendExperienceDelta when UI applies.",
+    "Every scope.included item should be represented by at least one of these existing fields with its applicable object/subject, action/behavior, inputs/fields, preconditions, blocking reasons, success changes, feedback, source refs, or unresolved note.",
+    "If an included scope item has no applicable business or technical detail beyond its name, preserve the reason in scope.included[].items or assumptions so downstream PGC/AAC/TaskPlan do not silently drop it.",
   ];
 }
 
@@ -90,6 +109,8 @@ export function brainstormRequirementSemanticRules(): string[] {
     "If a required semantic detail for the confirmed current phase is unclear after reading the provided refs, ask the user in the relevant Brainstorm block before accepting; do not let downstream PGC/AAC/TaskPlan rediscover missing requirement rules from scratch.",
     "concept_grounding must cover confirmed business objects, key object field sets, operations on those objects, operation inputs, key flow logic, rule boundaries, state transitions, blocking reasons, and user-visible feedback when those details are relevant; it must not become only a glossary of nouns.",
     "frontendExperience/frontendExperienceDelta is required only for UI or user-visible workflow phases; conceptGrounding may be none_required or not_applicable only with a concrete reason.",
+    ...scopeItemCoverageClarificationRules(),
+    ...scopeItemCoverageCandidateRules(),
     ...businessObjectOperationClarificationRules(),
     ...businessObjectOperationCandidateRules(),
     ...frontendOperationPathClarificationRules(),

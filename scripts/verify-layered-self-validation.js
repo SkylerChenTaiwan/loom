@@ -354,6 +354,10 @@ function assertCandidateSelfReviewRules(request, label) {
     `${label}: self-review rules must verify final_summary details land in existing fields`,
   );
   assert.ok(
+    selfReview?.rules?.some((rule) => rule.includes("every confirmed scope.included item") && rule.includes("scope-item coverage summary")),
+    `${label}: self-review rules must verify every included scope item is covered`,
+  );
+  assert.ok(
     selfReview?.rules?.some((rule) => rule.includes("object-operation summary") && rule.includes("key field sets")),
     `${label}: self-review rules must verify object-operation details land in existing fields`,
   );
@@ -701,17 +705,25 @@ function assertBrainstormConceptGroundingRequest(request) {
     "BrainstormSessionRequest: concept_grounding must require a dedicated concept and business-rules summary",
   );
   assert.ok(
-    blockConfirmationRules.concept_grounding?.includes("key field sets") &&
-      blockConfirmationRules.concept_grounding?.includes("operation inputs"),
-    "BrainstormSessionRequest: concept_grounding must require object field sets and operation inputs",
+    blockConfirmationRules.concept_grounding?.includes("inputs or fields") &&
+      blockConfirmationRules.concept_grounding?.includes("actions or behaviors"),
+    "BrainstormSessionRequest: concept_grounding must require applicable inputs/fields and actions/behaviors",
   );
   assert.ok(
     request.firstClarificationGate?.mustPresentBeforeAccept?.includes("businessObjectOperationSummary"),
     "BrainstormSessionRequest: first clarification gate must include businessObjectOperationSummary",
   );
   assert.ok(
-    blockRules.some((rule) => rule.includes("key business objects, key field sets, supported operations")),
-    "BrainstormSessionRequest: concept_grounding block must own object-operation clarification",
+    blockRules.some((rule) => rule.includes("applicable objects or subjects, actions or behaviors, inputs or fields")),
+    "BrainstormSessionRequest: concept_grounding block must own applicable scope-detail clarification",
+  );
+  assert.ok(
+    blockRules.some((rule) => rule.includes("map every confirmed scope.included item")),
+    "BrainstormSessionRequest: concept_grounding block must map every included scope item",
+  );
+  assert.ok(
+    blockRules.some((rule) => rule.includes("Do not use a fixed capability taxonomy")),
+    "BrainstormSessionRequest: scope coverage must avoid fixed capability taxonomy",
   );
   assert.ok(
     blockConfirmationRules.frontend_experience?.includes("dedicated frontend target"),
@@ -758,7 +770,7 @@ function assertBrainstormCandidateRules(request) {
     "BrainstormSessionRequest: final_summary must require business-detail confirmation when applicable",
   );
   assert.ok(
-    request.rules?.requirementSemanticGrounding?.finalSummaryBusinessDetailContract?.requiredUserVisibleTopicsWhenApplicable?.includes("blocking rules and blocking reasons"),
+    request.rules?.requirementSemanticGrounding?.finalSummaryBusinessDetailContract?.requiredUserVisibleTopicsWhenApplicable?.includes("applicable blocking rules and blocking reasons"),
     "BrainstormSessionRequest: final_summary business detail contract must include blocking reasons",
   );
   assert.equal(
