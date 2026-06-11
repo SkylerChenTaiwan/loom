@@ -2976,7 +2976,7 @@ function taskResultSchemaShape(taskPlan: TaskPlan, task: Task): Record<string, u
         summary: "What user-visible behavior this task added or verified.",
       }],
       userActionsImplemented: ["plain-language user action implemented or verified"],
-      interactionStatesCovered: ["idle | loading | success | error | empty"],
+      interactionStatesCovered: ["idle | loading | success | error | empty | business_blocking"],
       dataBinding: {
         mode: "wired | mocked_with_reason | static_only_with_reason | not_applicable",
         ...(workflowClosureRequirements.length > 0 ? {

@@ -25,8 +25,32 @@ export function brainstormCandidateSelfReviewRules(): string[] {
     "Self-review must verify that confirmed requirement details are stored in existing BrainstormCandidate fields rather than only in chat: scope.included[].items, acceptance[].statement, domainModel.businessFlows[].summary, conceptGrounding, frontendExperience/frontendExperienceDelta, and phasePlan.nextPhasePreview.",
     "Self-review must check that scope items name concrete objects, actions, rules, fields, states, or boundaries when those details were confirmed.",
     "Self-review must check that acceptance statements are executable outcomes and that businessFlows summarize flow steps, preconditions, validation or blocking rules, blocking reasons, success state, and input/display/pass-through fields when applicable.",
+    "Self-review must check that user-facing workflow phases store page operation paths in frontendExperience/frontendExperienceDelta: how users find or receive the target object, which view/action starts the operation, and how success, empty, error, or business-blocking results are observed.",
     "If self-review finds that a required detail is unclear or missing from the existing fields, return to the relevant Brainstorm block and ask the user before submitting; do not let PGC, AAC, TaskPlan, or TaskExecution rediscover that detail later.",
     "Do not create a separate Markdown spec, commit, or parallel requirement artifact for this self-review; the accepted BrainstormCandidate remains the requirement contract.",
+  ];
+}
+
+export function frontendOperationPathClarificationRules(): string[] {
+  return [
+    "The frontend_experience block owns page operation path clarification; do not wait until final_summary to first ask how users find targets, trigger actions, or observe results.",
+    "When the current phase has UI for existing business objects, present a natural-language default of paginated query results plus selection/action from those results unless the user has confirmed direct id entry, upstream context, login/session context, or no target object.",
+    "When the operation starts from a prior page, authenticated session, notification, external link, or already selected record, describe that preselected context in user language and do not force a query page.",
+    "When the operation is create-only, login-only, static content, a local developer tool, or a non-UI technical task, state why target selection is not applicable.",
+    "If a search/query path is proposed, list only query criteria that are grounded in confirmed object fields, acceptance statements, business flow details, repository facts, or the user's own words; do not use a hardcoded industry field list.",
+    "If confirmed fields are insufficient for meaningful filters, do not block the phase. Confirm a basic paginated result list with no advanced filters, and record the missing filter detail as a risk or note.",
+    "Use natural user-facing wording in the conversation, such as '分页查询结果中选择记录并操作' or '从登录上下文带入当前对象'. Do not show internal enum values like query_and_select, direct_id_lookup, preselected_context, not_applicable, dataViews, actions, or operationPaths to the user.",
+  ];
+}
+
+export function frontendOperationPathCandidateRules(): string[] {
+  return [
+    "When frontendExperience/frontendExperienceDelta is present, store confirmed page operation paths in dataViews, actions, and operationPaths instead of only in confirmationSummary.",
+    "For query-and-select workflows, set dataViews[].paginationRequired=true and defaultLoadsFirstPage=true; searchCriteria is optional and must come from confirmed fields or source refs.",
+    "For direct id lookup workflows, explain why direct id entry is user-confirmed or operationally appropriate; do not use it as the default for existing-object back-office operations.",
+    "For preselected context workflows, make operationPaths[].selectionSummary identify the upstream context such as prior page, session, notification, or selected parent record.",
+    "Each action must name its entry point, input fields when applicable, success feedback, blocking/error feedback, and refresh policy so AAC can project the interface, UI state, and verification responsibility.",
+    "Each operationPath must connect a user goal to dataViewRefs/actionRefs and requiredStates so PGC, AAC, TaskPlan, and TaskExecution inherit the confirmed user experience target.",
   ];
 }
 
@@ -34,13 +58,16 @@ export function brainstormRequirementSemanticRules(): string[] {
   return [
     "Brainstorm must read the original requirement refs and any confirmed requirement decision refs before presenting a final_summary or writing BrainstormCandidate.",
     "For the user-confirmed current phase, preserve requirement semantics in existing BrainstormCandidate fields; do not reduce the phase to a vague label such as implement feature, fix bug, continue expansion, or optimize page.",
-    "The Agent, not the CLI, decides whether the current phase involves business flows, user operations, state changes, forms/fields, validation/blocking rules, or frontend/backend interaction. If it does, the final_summary block must show a business-detail confirmation covering current-phase flows, preconditions, validation rules, blocking rules and reasons, success conditions and state changes, fields to input/display/pass through, deferred or not-done details, and source refs.",
+    "The Agent, not the CLI, decides whether the current phase involves business flows, user operations, state changes, forms/fields, validation/blocking rules, frontend/backend interaction, or user-facing operation paths. If it does, the final_summary block must show a business-detail confirmation covering current-phase flows, preconditions, validation rules, blocking rules and reasons, success conditions and state changes, fields to input/display/pass through, user operation path, deferred or not-done details, and source refs.",
     "If those business-detail categories do not apply to the current phase, the final_summary block must state the concrete not-applicable reason, such as this phase only changing build configuration, test harnesses, deployment files, or other non-domain technical work.",
-    "When business-detail confirmation applies, write the confirmed details into existing BrainstormCandidate fields: scope.included[].items for modules/actions/rules/fields/boundaries; acceptance[].statement for verifiable business outcomes; domainModel.businessFlows[].summary for flow steps, preconditions, validation/blocking, and success state; conceptGrounding for high-risk concepts, hard rules, and misunderstanding boundaries; frontendExperience/frontendExperienceDelta for required input, display, and feedback expectations.",
+    "When business-detail confirmation applies, write the confirmed details into existing BrainstormCandidate fields: scope.included[].items for modules/actions/rules/fields/boundaries; acceptance[].statement for verifiable business outcomes; domainModel.businessFlows[].summary for flow steps, preconditions, validation/blocking, and success state; conceptGrounding for high-risk concepts, object operations, hard rules, state changes, and misunderstanding boundaries; frontendExperience/frontendExperienceDelta for target discovery, selection, input, display, action entry, refresh, and feedback expectations.",
     "For correction, completion, or optimization phases, describe the expected behavior from original/confirmed requirements, the current implemented behavior from latestRepositoryContext, the confirmed delta for this phase, and the target behavior after correction using the same existing fields.",
     "For technical or non-domain phases, do not fabricate domain rules; instead express technical workflow, constraints, boundaries, expected behavior, and verification responsibilities in scope, acceptance, domainModel.businessFlows when useful, and conceptGrounding only when there are real high-risk concepts.",
     "Every current-phase acceptance statement must be source-grounded: cite sourceRefs from original requirements, confirmed decisions, user confirmation, or repository facts as appropriate; keywordHints are never acceptance authority.",
     "If a required semantic detail for the confirmed current phase is unclear after reading the provided refs, ask the user in the relevant Brainstorm block before accepting; do not let downstream PGC/AAC/TaskPlan rediscover missing requirement rules from scratch.",
+    "concept_grounding must cover confirmed business objects, operations on those objects, key flow logic, rule boundaries, state transitions, and blocking reasons when those details are relevant; it must not become only a glossary of nouns.",
     "frontendExperience/frontendExperienceDelta is required only for UI or user-visible workflow phases; conceptGrounding may be none_required or not_applicable only with a concrete reason.",
+    ...frontendOperationPathClarificationRules(),
+    ...frontendOperationPathCandidateRules(),
   ];
 }
