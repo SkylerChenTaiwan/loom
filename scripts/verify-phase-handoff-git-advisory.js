@@ -263,6 +263,44 @@ function writeDeliveryAtPhaseHandoff(root) {
     createdAt: now(),
     updatedAt: now(),
   });
+  // Phase continuation reads the original requirement context (repository-context accept ->
+  // requirementContextRefsForPhaseContinuation). A real delivery always has it; this fixture
+  // must lay it down at the stable path or accept fails with SOURCE_NOT_READY. Mirrors the
+  // requirement-context fixture in verify-next-phase-preview-routing.js.
+  const requirementContextRef = `.loom/deliveries/${deliveryId}/requirements/context.json`;
+  const normalizedRequirementTextRef = `.loom/deliveries/${deliveryId}/requirements/normalized.txt`;
+  const keywordHintsRef = `.loom/deliveries/${deliveryId}/requirements/keyword-hints.json`;
+  fs.mkdirSync(projectFile(root, `.loom/deliveries/${deliveryId}/requirements`), { recursive: true });
+  fs.writeFileSync(projectFile(root, normalizedRequirementTextRef), "Verify git checkpoint advisory at phase handoff.\n");
+  writeJson(projectFile(root, requirementContextRef), {
+    schemaVersion: "1.0",
+    deliveryId,
+    createdAt: now(),
+    sourceItems: [{
+      itemId: "req-001",
+      kind: "text",
+      origin: "user_message",
+      textRef: normalizedRequirementTextRef,
+      extractionStatus: "completed",
+      digest: "sha256:handoff",
+      characterCount: 48,
+    }],
+    normalizedTextRef: normalizedRequirementTextRef,
+    normalizedTextStatus: "completed",
+    keywordHintsRef,
+    keywordHintsStatus: "empty",
+    keywordHintsReason: "Fixture has no keyword hints.",
+  });
+  writeJson(projectFile(root, keywordHintsRef), {
+    schemaVersion: "1.0",
+    deliveryId,
+    usage: "advisory_only",
+    status: "empty",
+    globalKeywords: [],
+    sectionKeywords: [],
+    rules: { mustNotTreatAsScope: true, mustNotTreatAsAcceptance: true, mustNotTreatAsConfirmedConcept: true },
+    generatedAt: now(),
+  });
   return deliveryId;
 }
 
