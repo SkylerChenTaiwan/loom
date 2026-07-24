@@ -1,5 +1,9 @@
 # loom（我們的 fork）— 「不會歪的 dev 系統」底座
 
+## 開發流程（走 mattpocock，不走 dev-loop）
+
+本 repo 開發走 mattpocock skill：`grilling`／`grill-with-docs` 對齊需求 → `to-spec`／`to-tickets` 切票 → `tdd`／`implement` → `code-review`。**Bug 一律 `diagnosing-bugs`：先建可靠 repro（一條命令穩定觸發）才理論化，禁跳過 repro 猜根因。**
+
 > ⚠️ 這是 `valkor-ai/loom` 的 fork。我們拿它當底座,要在上面疊一層**沒人做過的「架構執法層」**。動手前**務必先讀下面的設計脈絡**,不要把它當普通 upstream loom 開發。
 
 ## 這個 fork 的任務
